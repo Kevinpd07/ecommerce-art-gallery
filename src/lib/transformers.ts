@@ -1,8 +1,7 @@
-import type { Product, Category, Brand, Artist } from "@/types";
+import type { Product, Category, Artist } from "@/types";
 import type {
   Product as PrismaProduct,
   Category as PrismaCategory,
-  Brand as PrismaBrand,
   Artist as PrismaArtist,
 } from "@prisma/client";
 
@@ -12,10 +11,6 @@ type ProductWithRelations = PrismaProduct & {
 };
 
 type CategoryWithCount = PrismaCategory & {
-  _count?: { products: number };
-};
-
-type BrandWithCount = PrismaBrand & {
   _count?: { products: number };
 };
 
@@ -51,15 +46,6 @@ export function transformCategory(category: CategoryWithCount): Category {
     slug: category.slug,
     icon: category.icon || "Package",
     productCount: category._count?.products || 0,
-  };
-}
-
-export function transformBrand(brand: BrandWithCount): Brand {
-  return {
-    id: brand.id,
-    name: brand.name,
-    logo: brand.logo || undefined,
-    productCount: brand._count?.products || 0,
   };
 }
 
