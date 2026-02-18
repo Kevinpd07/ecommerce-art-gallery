@@ -1,13 +1,17 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import Link from "next/link"
-import { Search, UserPlus, MoreHorizontal, Mail, Ban, Eye, Shield } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Skeleton } from "@/components/ui/skeleton"
+import { useEffect, useState } from "react";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Loader2,
+  MoreHorizontal,
+  Search,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -15,301 +19,500 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Card, CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { useAdminStore } from "@/stores/admin-store"
+} from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-const statusConfig = {
-  active: { label: "Activo", variant: "default" as const, className: "bg-green-600" },
-  inactive: { label: "Inactivo", variant: "secondary" as const, className: "" },
-  suspended: { label: "Suspendido", variant: "destructive" as const, className: "" },
-}
-
-const roleLabels: Record<string, string> = {
-  admin: "Administrador",
-  customer: "Cliente",
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  avatar: string | null;
+  role: string;
+  status: string;
+  createdAt: string;
 }
 
 function UsersSkeleton() {
   return (
-    <Card>
-      <CardContent className="p-0">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Usuario</TableHead>
-              <TableHead>Rol</TableHead>
-              <TableHead>Estado</TableHead>
-              <TableHead>Pedidos</TableHead>
-              <TableHead>Total Gastado</TableHead>
-              <TableHead>Registro</TableHead>
-              <TableHead className="w-[70px]"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {[1, 2, 3, 4, 5].map((i) => (
-              <TableRow key={i}>
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                    <Skeleton className="h-9 w-9 rounded-full" />
-                    <div>
-                      <Skeleton className="h-4 w-24" />
-                      <Skeleton className="mt-1 h-3 w-32" />
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell><Skeleton className="h-6 w-20" /></TableCell>
-                <TableCell><Skeleton className="h-6 w-16" /></TableCell>
-                <TableCell><Skeleton className="h-4 w-8" /></TableCell>
-                <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                <TableCell><Skeleton className="h-8 w-8" /></TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
-  )
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Usuario</TableHead>
+          <TableHead>Email</TableHead>
+          <TableHead>Rol</TableHead>
+          <TableHead>Estado</TableHead>
+          <TableHead className="w-[70px]"></TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {[1, 2, 3, 4, 5].map((i) => (
+          <TableRow key={i}>
+            <TableCell>
+              <Skeleton className="h-4 w-32" />
+            </TableCell>
+            <TableCell>
+              <Skeleton className="h-4 w-48" />
+            </TableCell>
+            <TableCell>
+              <Skeleton className="h-4 w-20" />
+            </TableCell>
+            <TableCell>
+              <Skeleton className="h-4 w-20" />
+            </TableCell>
+            <TableCell>
+              <Skeleton className="h-8 w-8" />
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
 }
 
-export default function AdminUsersPage() {
-  const { users, loading, fetchUsers } = useAdminStore()
-  const [searchQuery, setSearchQuery] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
-  const [roleFilter, setRoleFilter] = useState("all")
+export default function UsersPage() {
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [openDialog, setOpenDialog] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [deleteUser, setDeleteUser] = useState<User | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  // Form state
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState("CUSTOMER");
+  const [status, setStatus] = useState("ACTIVE");
+
+  const fetchUsers = async () => {
+    try {
+      const res = await fetch("/api/users");
+      const data = await res.json();
+      setUsers(data);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    fetchUsers()
-  }, [fetchUsers])
+    fetchUsers();
+  }, []);
 
-  const filteredUsers = users.filter((user) => {
-    const matchesSearch =
-      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesStatus = statusFilter === "all" || user.status === statusFilter
-    const matchesRole = roleFilter === "all" || user.role === roleFilter
-    return matchesSearch && matchesStatus && matchesRole
-  })
+  const filteredUsers = users.filter(
+    (user) =>
+      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
 
-  const activeUsers = users.filter((u) => u.status === "active").length
-  const adminUsers = users.filter((u) => u.role === "admin").length
-  const totalSpent = users.reduce((sum, u) => sum + u.totalSpent, 0)
+  const handleOpenDialog = (user?: User) => {
+    if (user) {
+      setEditingUser(user);
+      setName(user.name);
+      setEmail(user.email);
+      setPhone(user.phone || "");
+      setPassword("");
+      setRole(user.role.toUpperCase());
+      setStatus(user.status.toUpperCase());
+    } else {
+      setEditingUser(null);
+      setName("");
+      setEmail("");
+      setPhone("");
+      setPassword("");
+      setRole("CUSTOMER");
+      setStatus("ACTIVE");
+    }
+    setOpenDialog(true);
+  };
+
+  const handleSave = async () => {
+    if (!name.trim() || !email.trim()) return;
+
+    setSaving(true);
+    try {
+      const payload = {
+        name: name.trim(),
+        email: email.trim(),
+        phone: phone.trim() || null,
+        role,
+        status,
+        ...(password.trim() && { password: password.trim() }),
+      };
+
+      if (editingUser) {
+        await fetch(`/api/users?id=${editingUser.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+      } else {
+        await fetch("/api/users", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+      }
+
+      await fetchUsers();
+      setOpenDialog(false);
+    } catch (error) {
+      console.error("Error saving user:", error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteUser) return;
+
+    setSaving(true);
+    try {
+      await fetch(`/api/users?id=${deleteUser.id}`, {
+        method: "DELETE",
+      });
+      await fetchUsers();
+      setDeleteUser(null);
+    } catch (error) {
+      console.error("Error deleting user:", error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const getRoleLabel = (role: string) => {
+    switch (role.toUpperCase()) {
+      case "ADMIN":
+        return "Administrador";
+      case "MODERATOR":
+        return "Moderador";
+      default:
+        return "Cliente";
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status.toUpperCase()) {
+      case "ACTIVE":
+        return "Activo";
+      case "INACTIVE":
+        return "Inactivo";
+      case "SUSPENDED":
+        return "Suspendido";
+      default:
+        return status;
+    }
+  };
+
+  const getStatusVariant = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "active":
+        return "default";
+      case "inactive":
+        return "secondary";
+      case "suspended":
+        return "destructive";
+      default:
+        return "outline";
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="mt-2 h-4 w-64" />
+          </div>
+        </div>
+        <UsersSkeleton />
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">Usuarios</h1>
           <p className="text-muted-foreground">
-            Administra los usuarios y clientes de tu tienda
+            Gestiona los usuarios de tu plataforma
           </p>
         </div>
-        <Button asChild>
-          <Link href="/admin/users/new">
-            <UserPlus className="mr-2 h-4 w-4" />
-            Nuevo Usuario
-          </Link>
+        <Button onClick={() => handleOpenDialog()}>
+          <Plus className="mr-2 h-4 w-4" />
+          Nuevo Usuario
         </Button>
       </div>
 
-      {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Usuarios
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{users.length}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Usuarios Activos
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-green-600">{activeUsers}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Administradores
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{adminUsers}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Gastado
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">S/ {totalSpent.toLocaleString()}</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filters */}
-      <div className="flex flex-col gap-4 sm:flex-row">
+      {/* Search */}
+      <div className="flex items-center gap-2">
         <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            type="search"
             placeholder="Buscar usuarios..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-8"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-9"
           />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="Estado" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="active">Activos</SelectItem>
-            <SelectItem value="inactive">Inactivos</SelectItem>
-            <SelectItem value="suspended">Suspendidos</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={roleFilter} onValueChange={setRoleFilter}>
-          <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="Rol" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="customer">Clientes</SelectItem>
-            <SelectItem value="admin">Admins</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
 
-      {/* Table */}
-      {loading && users.length === 0 ? (
-        <UsersSkeleton />
-      ) : (
-        <Card>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
+      {/* Users Table */}
+      <Card>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Usuario</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Telefono</TableHead>
+                <TableHead>Rol</TableHead>
+                <TableHead>Estado</TableHead>
+                <TableHead className="w-[70px]"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredUsers.length === 0 ? (
                 <TableRow>
-                  <TableHead>Usuario</TableHead>
-                  <TableHead>Rol</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead>Pedidos</TableHead>
-                  <TableHead>Total Gastado</TableHead>
-                  <TableHead>Registro</TableHead>
-                  <TableHead className="w-[70px]"></TableHead>
+                  <TableCell colSpan={6} className="text-center py-8">
+                    No hay usuarios registrados
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredUsers.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                      No se encontraron usuarios
+              ) : (
+                filteredUsers.map((user) => (
+                  <TableRow key={user.id}>
+                    <TableCell className="font-medium">{user.name}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {user.email}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {user.phone || "-"}
+                    </TableCell>
+                    <TableCell>
+                      <span
+                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                          user.role.toUpperCase() === "ADMIN"
+                            ? "bg-purple-100 text-purple-800"
+                            : user.role.toUpperCase() === "MODERATOR"
+                              ? "bg-blue-100 text-blue-800"
+                              : "bg-gray-100 text-gray-800"
+                        }`}
+                      >
+                        {getRoleLabel(user.role)}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <span
+                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                          user.status.toUpperCase() === "ACTIVE"
+                            ? "bg-green-100 text-green-800"
+                            : user.status.toUpperCase() === "INACTIVE"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {getStatusLabel(user.status)}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => handleOpenDialog(user)}
+                          >
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => setDeleteUser(user)}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Eliminar
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
-                ) : (
-                  filteredUsers.map((user) => {
-                    const status = statusConfig[user.status as keyof typeof statusConfig] || statusConfig.active
-                    return (
-                      <TableRow key={user.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <Avatar className="h-9 w-9">
-                              <AvatarFallback>
-                                {user.name.split(" ").map((n) => n[0]).join("")}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <p className="font-medium">{user.name}</p>
-                              <p className="text-xs text-muted-foreground">{user.email}</p>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={user.role === "admin" ? "default" : "outline"}>
-                            {roleLabels[user.role] || user.role}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={status.variant} className={status.className}>
-                            {status.label}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{user.orders}</TableCell>
-                        <TableCell>S/ {user.totalSpent.toFixed(2)}</TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {new Date(user.createdAt).toLocaleDateString("es-PE")}
-                        </TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem>
-                                <Eye className="mr-2 h-4 w-4" />
-                                Ver perfil
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                <Mail className="mr-2 h-4 w-4" />
-                                Enviar email
-                              </DropdownMenuItem>
-                              {user.role !== "admin" && (
-                                <DropdownMenuItem>
-                                  <Shield className="mr-2 h-4 w-4" />
-                                  Hacer admin
-                                </DropdownMenuItem>
-                              )}
-                              <DropdownMenuSeparator />
-                              {user.status !== "suspended" ? (
-                                <DropdownMenuItem className="text-destructive">
-                                  <Ban className="mr-2 h-4 w-4" />
-                                  Suspender
-                                </DropdownMenuItem>
-                              ) : (
-                                <DropdownMenuItem>
-                                  Reactivar cuenta
-                                </DropdownMenuItem>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      )}
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      {/* Add/Edit Dialog */}
+      <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>
+              {editingUser ? "Editar Usuario" : "Nuevo Usuario"}
+            </DialogTitle>
+            <DialogDescription>
+              {editingUser
+                ? "Modifica los datos del usuario"
+                : "Agrega un nuevo usuario a la plataforma"}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="name">Nombre completo</Label>
+              <Input
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Nombre del usuario"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="email@ejemplo.com"
+                disabled={!!editingUser}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="phone">Telefono</Label>
+              <Input
+                id="phone"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="+51 999 999 999"
+              />
+            </div>
+            {!editingUser && (
+              <div className="grid gap-2">
+                <Label htmlFor="password">Contrasena</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Contrasena"
+                />
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="role">Rol</Label>
+                <Select value={role} onValueChange={setRole}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="CUSTOMER">Cliente</SelectItem>
+                    <SelectItem value="MODERATOR">Moderador</SelectItem>
+                    <SelectItem value="ADMIN">Administrador</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="status">Estado</Label>
+                <Select value={status} onValueChange={setStatus}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ACTIVE">Activo</SelectItem>
+                    <SelectItem value="INACTIVE">Inactivo</SelectItem>
+                    <SelectItem value="SUSPENDED">Suspendido</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpenDialog(false)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleSave}
+              disabled={saving || !name.trim() || !email.trim()}
+            >
+              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {editingUser ? "Guardar Cambios" : "Crear Usuario"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteUser} onOpenChange={() => setDeleteUser(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Eliminar Usuario</AlertDialogTitle>
+            <AlertDialogDescription>
+              {`Estas seguro de que deseas eliminar a "${deleteUser?.name}"? Esta accion no se puede deshacer.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={saving}
+            >
+              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
-  )
+  );
 }
