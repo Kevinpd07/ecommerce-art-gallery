@@ -1,22 +1,107 @@
-"use client"
+"use client";
 
-import { Save } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
-import { Separator } from "@/components/ui/separator"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Save } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 
 export default function AdminSettingsPage() {
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Form state
+  const [storeName, setStoreName] = useState("ArtGallery");
+  const [storeEmail, setStoreEmail] = useState("info@artgalleryshop.com");
+  const [storePhone, setStorePhone] = useState("+1 555 123 4567");
+  const [storeAddress, setStoreAddress] = useState("123 Main St, New York");
+  const [storeDescription, setStoreDescription] = useState(
+    "Tu tienda de arte de confianza",
+  );
+  const [timezone, setTimezone] = useState("america-new_york");
+  const [currency, setCurrency] = useState("usd");
+
+  // Load settings on mount
+  useEffect(() => {
+    async function loadSettings() {
+      try {
+        const res = await fetch("/api/settings");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.storeName) setStoreName(data.storeName);
+          if (data.storeEmail) setStoreEmail(data.storeEmail);
+          if (data.storePhone) setStorePhone(data.storePhone);
+          if (data.storeAddress) setStoreAddress(data.storeAddress);
+          if (data.storeDescription) setStoreDescription(data.storeDescription);
+          if (data.timezone) setTimezone(data.timezone);
+          if (data.currency) setCurrency(data.currency);
+        }
+      } catch (error) {
+        console.error("Error loading settings:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadSettings();
+  }, []);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      const settings = {
+        storeName,
+        storeEmail,
+        storePhone,
+        storeAddress,
+        storeDescription,
+        timezone,
+        currency,
+      };
+
+      const res = await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(settings),
+      });
+
+      if (res.ok) {
+        alert("Configuración guardada correctamente");
+      } else {
+        const error = await res.json();
+        alert(error.error || "Error al guardar");
+      }
+    } catch {
+      alert("Error al guardar la configuración");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <p>Cargando...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -48,28 +133,46 @@ export default function AdminSettingsPage() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="storeName">Nombre de la tienda</Label>
-                  <Input id="storeName" defaultValue="BasicTechShop" />
+                  <Input
+                    id="storeName"
+                    value={storeName}
+                    onChange={(e) => setStoreName(e.target.value)}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="storeEmail">Email de contacto</Label>
-                  <Input id="storeEmail" type="email" defaultValue="info@basictechshop.com" />
+                  <Input
+                    id="storeEmail"
+                    type="email"
+                    value={storeEmail}
+                    onChange={(e) => setStoreEmail(e.target.value)}
+                  />
                 </div>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="storePhone">Telefono</Label>
-                  <Input id="storePhone" defaultValue="+51 999 888 777" />
+                  <Input
+                    id="storePhone"
+                    value={storePhone}
+                    onChange={(e) => setStorePhone(e.target.value)}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="storeAddress">Direccion</Label>
-                  <Input id="storeAddress" defaultValue="Av. Tecnologia 123, Lima" />
+                  <Input
+                    id="storeAddress"
+                    value={storeAddress}
+                    onChange={(e) => setStoreAddress(e.target.value)}
+                  />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="storeDescription">Descripcion</Label>
                 <Input
                   id="storeDescription"
-                  defaultValue="Tu tienda de tecnologia de confianza"
+                  value={storeDescription}
+                  onChange={(e) => setStoreDescription(e.target.value)}
                 />
               </div>
             </CardContent>
@@ -86,26 +189,47 @@ export default function AdminSettingsPage() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label>Zona horaria</Label>
-                  <Select defaultValue="america-lima">
+                  <Select value={timezone} onValueChange={setTimezone}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="america-lima">America/Lima (GMT-5)</SelectItem>
-                      <SelectItem value="america-bogota">America/Bogota (GMT-5)</SelectItem>
-                      <SelectItem value="america-mexico">America/Mexico_City (GMT-6)</SelectItem>
+                      <SelectItem value="america-new_york">
+                        America/New York (GMT-5)
+                      </SelectItem>
+                      <SelectItem value="america-miami">
+                        America/Miami (GMT-5)
+                      </SelectItem>
+                      <SelectItem value="america-chicago">
+                        America/Chicago (GMT-6)
+                      </SelectItem>
+                      <SelectItem value="america-denver">
+                        America/Denver (GMT-7)
+                      </SelectItem>
+                      <SelectItem value="america-los_angeles">
+                        America/Los Angeles (GMT-8)
+                      </SelectItem>
+                      <SelectItem value="america-lima">
+                        America/Lima (GMT-5)
+                      </SelectItem>
+                      <SelectItem value="america-bogota">
+                        America/Bogota (GMT-5)
+                      </SelectItem>
+                      <SelectItem value="america-mexico">
+                        America/Mexico_City (GMT-6)
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>Moneda</Label>
-                  <Select defaultValue="pen">
+                  <Select value={currency} onValueChange={setCurrency}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="pen">Soles (S/)</SelectItem>
                       <SelectItem value="usd">Dolares ($)</SelectItem>
+                      <SelectItem value="pen">Soles (S/)</SelectItem>
                       <SelectItem value="eur">Euros (EUR)</SelectItem>
                     </SelectContent>
                   </Select>
@@ -129,7 +253,7 @@ export default function AdminSettingsPage() {
                 <div>
                   <p className="font-medium">Mostrar productos agotados</p>
                   <p className="text-sm text-muted-foreground">
-                    Los productos sin stock se mostraran como "Agotado"
+                    Los productos sin stock se mostraran como Agotado
                   </p>
                 </div>
                 <Switch defaultChecked />
@@ -160,18 +284,16 @@ export default function AdminSettingsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Envio</CardTitle>
-              <CardDescription>
-                Configura las opciones de envio
-              </CardDescription>
+              <CardDescription>Configura las opciones de envio</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label>Costo de envio estandar</Label>
+                  <Label>Costo de envio estandar ($)</Label>
                   <Input type="number" defaultValue="15" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Envio gratis desde (S/)</Label>
+                  <Label>Envio gratis desde ($)</Label>
                   <Input type="number" defaultValue="200" />
                 </div>
               </div>
@@ -256,7 +378,7 @@ export default function AdminSettingsPage() {
                 <div>
                   <p className="font-medium">Transferencia bancaria</p>
                   <p className="text-sm text-muted-foreground">
-                    BCP, BBVA, Interbank, Scotiabank
+                    Bank transfers
                   </p>
                 </div>
                 <Switch defaultChecked />
@@ -264,10 +386,8 @@ export default function AdminSettingsPage() {
               <Separator />
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium">Billeteras digitales</p>
-                  <p className="text-sm text-muted-foreground">
-                    Yape, Plin, PayPal
-                  </p>
+                  <p className="font-medium">PayPal</p>
+                  <p className="text-sm text-muted-foreground">PayPal wallet</p>
                 </div>
                 <Switch defaultChecked />
               </div>
@@ -288,11 +408,11 @@ export default function AdminSettingsPage() {
 
       {/* Save Button */}
       <div className="flex justify-end">
-        <Button>
+        <Button onClick={handleSave} disabled={isSaving}>
           <Save className="mr-2 h-4 w-4" />
-          Guardar Cambios
+          {isSaving ? "Guardando..." : "Guardar Cambios"}
         </Button>
       </div>
     </div>
-  )
+  );
 }

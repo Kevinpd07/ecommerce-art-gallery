@@ -7,7 +7,7 @@ const globalForPrisma = globalThis as unknown as {
   pool: Pool | undefined;
 };
 
-function createPrismaClient() {
+function createPrismaClient(): PrismaClient {
   // Validate DATABASE_URL exists
   if (!process.env.DATABASE_URL) {
     console.error("DATABASE_URL is not defined in environment variables");
@@ -26,10 +26,11 @@ function createPrismaClient() {
   });
 
   const adapter = new PrismaPg(pool);
-  return new PrismaClient({ adapter });
+  return new PrismaClient({ adapter }) as PrismaClient;
 }
 
-export const prisma = globalForPrisma.prisma ?? createPrismaClient();
+export const prisma: PrismaClient =
+  globalForPrisma.prisma ?? createPrismaClient();
 
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;

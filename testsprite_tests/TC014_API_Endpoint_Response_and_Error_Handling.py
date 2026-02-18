@@ -138,8 +138,8 @@ async def run_test():
 
         # --> Assertions to verify final state
         frame = context.pages[-1]
-        await expect(frame.locator('text=BasicTechShop').first).to_be_visible(timeout=30000)
-        await expect(frame.locator('text=Tu tienda de tecnologia de confianza. Los mejores productos de computacion a los mejores precios.').first).to_be_visible(timeout=30000)
+        await expect(frame.locator('text=ArtGalleryShop').first).to_be_visible(timeout=30000)
+        await expect(frame.locator('text=Tu tienda de arte de confianza. Las mejores obras de arte a los mejores precios.').first).to_be_visible(timeout=30000)
         await expect(frame.locator('text=Envio a Peru').first).to_be_visible(timeout=30000)
         await expect(frame.locator('text=Envio Confiable').first).to_be_visible(timeout=30000)
         await expect(frame.locator('text=Devoluciones Faciles').first).to_be_visible(timeout=30000)

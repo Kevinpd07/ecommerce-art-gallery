@@ -15,9 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "BasicTechShop - Tu Tienda de Tecnologia",
+  title: "ArtGallery - Tu Tienda de Arte",
   description:
-    "Los mejores productos de computacion: PCs, monitores, teclados, mouse y mas. Envio a todo EEUU.",
+    "Los mejores obras de arte: Cuadros, artistas, minimalismo, paisajes y mas. Envio a todo EEUU.",
 };
 
 export default function RootLayout({

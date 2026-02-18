@@ -148,7 +148,7 @@ async def run_test():
         await expect(frame.locator('text=Devoluciones Faciles').first).to_be_visible(timeout=30000)
         await expect(frame.locator('text=Compra Segura').first).to_be_visible(timeout=30000)
         await expect(frame.locator('text=BT').first).to_be_visible(timeout=30000)
-        await expect(frame.locator('text=BasicTechShop').first).to_be_visible(timeout=30000)
+        await expect(frame.locator('text=ArtGalleryShop').first).to_be_visible(timeout=30000)
         await expect(frame.locator('text=PRODUCTOS').first).to_be_visible(timeout=30000)
         await expect(frame.locator('text=Cambiar tema').first).to_be_visible(timeout=30000)
         await expect(frame.locator('text=Favoritos').first).to_be_visible(timeout=30000)

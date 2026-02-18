@@ -179,3 +179,18 @@ model OrderItem {
   @@index([orderId])
   @@map("order_items")
 }
+
+model Settings {
+  id        String   @id @default("default")
+  storeName String   @default("ArtGallery")
+  storeEmail String  @default("info@artgallery.com")
+  storePhone String  @default("+1 555 123 4567")
+  storeAddress String @default("")
+  storeDescription String @default("")
+  timezone  String   @default("america-new_york")
+  currency  String   @default("usd")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}

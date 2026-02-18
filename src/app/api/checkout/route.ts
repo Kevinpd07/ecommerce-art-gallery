@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     // Create line items for Stripe
     const lineItems = items.map((item) => ({
       price_data: {
-        currency: "pen", // Peruvian Sol
+        currency: "usd", // US Dollar
         product_data: {
           name: item.name,
           images: item.image ? [item.image] : [],
@@ -70,9 +70,9 @@ export async function POST(request: NextRequest) {
               type: "fixed_amount" as const,
               fixed_amount: {
                 amount: 0,
-                currency: "pen",
+                currency: "usd",
               },
-              display_name: "Envio gratis",
+              display_name: "Free shipping",
               delivery_estimate: {
                 minimum: { unit: "business_day" as const, value: 3 },
                 maximum: { unit: "business_day" as const, value: 5 },
@@ -83,10 +83,10 @@ export async function POST(request: NextRequest) {
             shipping_rate_data: {
               type: "fixed_amount" as const,
               fixed_amount: {
-                amount: 1500, // S/ 15.00
-                currency: "pen",
+                amount: 1500, // $15.00
+                currency: "usd",
               },
-              display_name: "Envio express",
+              display_name: "Express shipping",
               delivery_estimate: {
                 minimum: { unit: "business_day" as const, value: 1 },
                 maximum: { unit: "business_day" as const, value: 2 },
@@ -99,10 +99,10 @@ export async function POST(request: NextRequest) {
             shipping_rate_data: {
               type: "fixed_amount" as const,
               fixed_amount: {
-                amount: 1500, // S/ 15.00
-                currency: "pen",
+                amount: 1500, // $15.00
+                currency: "usd",
               },
-              display_name: "Envio estandar",
+              display_name: "Standard shipping",
               delivery_estimate: {
                 minimum: { unit: "business_day" as const, value: 3 },
                 maximum: { unit: "business_day" as const, value: 5 },
@@ -113,10 +113,10 @@ export async function POST(request: NextRequest) {
             shipping_rate_data: {
               type: "fixed_amount" as const,
               fixed_amount: {
-                amount: 3000, // S/ 30.00
-                currency: "pen",
+                amount: 3000, // $30.00
+                currency: "usd",
               },
-              display_name: "Envio express",
+              display_name: "Express shipping",
               delivery_estimate: {
                 minimum: { unit: "business_day" as const, value: 1 },
                 maximum: { unit: "business_day" as const, value: 2 },
@@ -147,7 +147,7 @@ export async function POST(request: NextRequest) {
       shipping_options: shippingOptions,
       billing_address_collection: "required",
       shipping_address_collection: {
-        allowed_countries: ["PE"],
+        allowed_countries: ["US"],
       },
     });
 
