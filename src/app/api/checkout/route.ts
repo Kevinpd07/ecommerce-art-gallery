@@ -32,6 +32,12 @@ export async function POST(request: NextRequest) {
     const body: CheckoutBody = await request.json();
     const { items, metadata } = body;
 
+    // Get base URL from request headers or environment variable
+    const origin =
+      request.headers.get("origin") ||
+      process.env.NEXT_PUBLIC_APP_URL ||
+      "http://localhost:3000";
+
     if (!items || items.length === 0) {
       return NextResponse.json({ error: "No items in cart" }, { status: 400 });
     }
@@ -120,12 +126,16 @@ export async function POST(request: NextRequest) {
         ];
 
     // Create Stripe checkout session
+    console.log("Creating Stripe checkout session...");
+    console.log("Stripe secret key exists:", !!process.env.STRIPE_SECRET_KEY);
+    console.log("Items:", items);
+
     const stripeSession = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: lineItems,
       mode: "payment",
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/checkout/cancel`,
+      success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/checkout/cancel`,
       customer_email: session.user.email || undefined,
       metadata: {
         ...metadata,
