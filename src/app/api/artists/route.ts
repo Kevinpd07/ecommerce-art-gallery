@@ -52,3 +52,58 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export async function PUT(request: NextRequest) {
+  try {
+    const body = await request.json();
+
+    const artist = await prisma.artist.update({
+      where: { id: body.id },
+      data: {
+        name: body.name,
+        slug: body.slug,
+        photo: body.photo,
+        bio: body.bio,
+      },
+      include: {
+        _count: {
+          select: { products: true },
+        },
+      },
+    });
+
+    return NextResponse.json(transformArtist(artist));
+  } catch (error) {
+    console.error("Error updating artist:", error);
+    return NextResponse.json(
+      { error: "Error updating artist" },
+      { status: 500 },
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json(
+        { error: "Artist ID is required" },
+        { status: 400 },
+      );
+    }
+
+    await prisma.artist.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Error deleting artist:", error);
+    return NextResponse.json(
+      { error: "Error deleting artist" },
+      { status: 500 },
+    );
+  }
+}

@@ -11,6 +11,7 @@ import {
   ChevronLeft,
   Store,
   Palette,
+  Grid,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,8 @@ import { Button } from "@/components/ui/button";
 const navigation = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { name: "Obras", href: "/admin/products", icon: Package },
+  { name: "Artistas", href: "/admin/artists", icon: Palette },
+  { name: "Categorias", href: "/admin/categories", icon: Grid },
   { name: "Pagos", href: "/admin/payments", icon: CreditCard },
   { name: "Usuarios", href: "/admin/users", icon: Users },
   { name: "Configuracion", href: "/admin/settings", icon: Settings },

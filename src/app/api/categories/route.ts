@@ -51,3 +51,57 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export async function PUT(request: NextRequest) {
+  try {
+    const body = await request.json();
+
+    const category = await prisma.category.update({
+      where: { id: body.id },
+      data: {
+        name: body.name,
+        slug: body.slug,
+        icon: body.icon,
+      },
+      include: {
+        _count: {
+          select: { products: true },
+        },
+      },
+    });
+
+    return NextResponse.json(transformCategory(category));
+  } catch (error) {
+    console.error("Error updating category:", error);
+    return NextResponse.json(
+      { error: "Error updating category" },
+      { status: 500 },
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json(
+        { error: "Category ID is required" },
+        { status: 400 },
+      );
+    }
+
+    await prisma.category.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Error deleting category:", error);
+    return NextResponse.json(
+      { error: "Error deleting category" },
+      { status: 500 },
+    );
+  }
+}

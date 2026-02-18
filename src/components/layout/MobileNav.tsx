@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { useSession, signOut } from "next-auth/react";
 import {
   Menu,
   Palette,
@@ -13,6 +14,9 @@ import {
   User,
   Heart,
   Package,
+  LogIn,
+  LogOut,
+  Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -51,6 +55,14 @@ const categories = [
 
 export function MobileNav() {
   const [open, setOpen] = React.useState(false);
+  const { data: session, status } = useSession();
+  const isAuthenticated = status === "authenticated";
+  const isAdmin = session?.user?.role === "ADMIN";
+
+  const handleSignOut = () => {
+    signOut({ callbackUrl: "/" });
+    setOpen(false);
+  };
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -67,30 +79,60 @@ export function MobileNav() {
         <div className="mt-6 flex flex-col gap-4">
           {/* User Actions */}
           <div className="flex flex-col gap-2">
-            <Link
-              href="/account"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-accent"
-            >
-              <User className="h-4 w-4" />
-              Mi Cuenta
-            </Link>
-            <Link
-              href="/favorites"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-accent"
-            >
-              <Heart className="h-4 w-4" />
-              Favoritos
-            </Link>
-            <Link
-              href="/orders"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-accent"
-            >
-              <Package className="h-4 w-4" />
-              Mis Pedidos
-            </Link>
+            {isAuthenticated ? (
+              <>
+                <Link
+                  href="/profile"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-accent"
+                >
+                  <User className="h-4 w-4" />
+                  Mi Cuenta
+                </Link>
+                <Link
+                  href="/profile/favorites"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-accent"
+                >
+                  <Heart className="h-4 w-4" />
+                  Favoritos
+                </Link>
+                <Link
+                  href="/profile/orders"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-accent"
+                >
+                  <Package className="h-4 w-4" />
+                  Mis Pedidos
+                </Link>
+                {isAdmin && (
+                  <Link
+                    href="/admin"
+                    onClick={() => setOpen(false)}
+                    className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-accent"
+                  >
+                    <Settings className="h-4 w-4" />
+                    Panel de Admin
+                  </Link>
+                )}
+                <button
+                  onClick={handleSignOut}
+                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-accent text-destructive"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Cerrar Sesión
+                </button>
+              </>
+            ) : (
+              <Link
+                href="/login"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-accent"
+              >
+                <LogIn className="h-4 w-4" />
+                Ingresar Sesión
+              </Link>
+            )}
           </div>
 
           <Separator />
