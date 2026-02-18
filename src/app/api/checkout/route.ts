@@ -1,42 +1,39 @@
-import { NextRequest, NextResponse } from "next/server"
-import { stripe } from "@/lib/stripe"
-import { auth } from "@/lib/auth"
+import { NextRequest, NextResponse } from "next/server";
+import { stripe } from "@/lib/stripe";
+import { auth } from "@/lib/auth";
 
 interface CartItem {
-  id: string
-  name: string
-  price: number
-  quantity: number
-  image?: string
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  image?: string;
 }
 
 interface CheckoutBody {
-  items: CartItem[]
-  customerEmail?: string
-  shippingAddressId?: string
-  metadata?: Record<string, string>
+  items: CartItem[];
+  customerEmail?: string;
+  shippingAddressId?: string;
+  metadata?: Record<string, string>;
 }
 
 export async function POST(request: NextRequest) {
   try {
     // Verify user is authenticated
-    const session = await auth()
+    const session = await auth();
 
     if (!session?.user) {
       return NextResponse.json(
         { error: "Debes iniciar sesión para realizar una compra" },
-        { status: 401 }
-      )
+        { status: 401 },
+      );
     }
 
-    const body: CheckoutBody = await request.json()
-    const { items, metadata } = body
+    const body: CheckoutBody = await request.json();
+    const { items, metadata } = body;
 
     if (!items || items.length === 0) {
-      return NextResponse.json(
-        { error: "No items in cart" },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: "No items in cart" }, { status: 400 });
     }
 
     // Create line items for Stripe
@@ -50,11 +47,14 @@ export async function POST(request: NextRequest) {
         unit_amount: Math.round(item.price * 100), // Stripe uses cents
       },
       quantity: item.quantity,
-    }))
+    }));
 
     // Calculate subtotal for free shipping check
-    const subtotal = items.reduce((acc, item) => acc + item.price * item.quantity, 0)
-    const qualifiesForFreeShipping = subtotal >= 200
+    const subtotal = items.reduce(
+      (acc, item) => acc + item.price * item.quantity,
+      0,
+    );
+    const qualifiesForFreeShipping = subtotal >= 200;
 
     // Build shipping options based on subtotal
     const shippingOptions = qualifiesForFreeShipping
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
               },
             },
           },
-        ]
+        ];
 
     // Create Stripe checkout session
     const stripeSession = await stripe.checkout.sessions.create({
@@ -130,24 +130,27 @@ export async function POST(request: NextRequest) {
       metadata: {
         ...metadata,
         userId: session.user.id,
-        items: JSON.stringify(items.map((i) => ({ id: i.id, qty: i.quantity }))),
+        items: JSON.stringify(
+          items.map((i) => ({ id: i.id, qty: i.quantity })),
+        ),
       },
       shipping_options: shippingOptions,
       billing_address_collection: "required",
       shipping_address_collection: {
         allowed_countries: ["PE"],
       },
-    })
+    });
 
     return NextResponse.json({
       sessionId: stripeSession.id,
-      url: stripeSession.url
-    })
+      url: stripeSession.url,
+    });
   } catch (error) {
-    console.error("Error creating checkout session:", error)
-    return NextResponse.json(
-      { error: "Error creating checkout session" },
-      { status: 500 }
-    )
+    console.error("Error creating checkout session:", error);
+    const errorMessage =
+      error instanceof Error
+        ? error.message
+        : "Error creating checkout session";
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
